@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,22 +31,30 @@ jobs:
             libtool \
             pkg-config \
             zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
+            libncurses-dev \
+            libtinfo6 \
             cmake \
             libffi-dev \
             libssl-dev \
-            lld
+            lld \
+            ccache
 
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          pip install buildozer cython
+          pip install buildozer==1.5.0 cython==0.29.36
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
 
       - name: Build APK
+        env:
+          ANDROID_HOME: ""
         run: |
-          yes | buildozer android debug 2>&1 | tail -50
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
